@@ -14,22 +14,24 @@ from youtube_search import YoutubeSearch
 from ZeMusic import app
 from ZeMusic.plugins.play.filters import command
 
-ydl_opts = {
-    "format": "best",
-    "keepvideo": True,
-    "prefer_ffmpeg": False,
-    "geo_bypass": True,
-    "outtmpl": "%(title)s.%(ext)s",
-    "quite": True,
-}
+def remove_if_exists(path):
+    if os.path.exists(path):
+        os.remove(path)
 
+Nem = config.BOT_NAME + " ابحث"
 
-
-@app.on_message(command(["بحث","يوت","تحميل صوت","yt"]) & ~filters.edited)
-def song(_, message):
+@app.on_message(command(["بحث","يوت","تحميل صوت","yt]))
+async def song_downloader(client, message: Message):
     query = " ".join(message.command[1:])
-    m = message.reply("- **ابشر جاري البحث ..**")
-    ydl_ops = {"format": "bestaudio[ext=m4a]"}
+    m = await message.reply_text("<b>«-جـارِ البحث عـن المقطـع الصـوتـي . . .</b>")
+    ydl_ops = {
+        'format': 'bestaudio[ext=m4a]',
+        'keepvideo': True,
+        'prefer_ffmpeg': False,
+        'geo_bypass': True,
+        'outtmpl': '%(title)s.%(ext)s',
+        'quite': True,
+    }
     try:
         results = YoutubeSearch(query, max_results=1).to_dict()
         link = f"https://youtube.com{results[0]['url_suffix']}"
@@ -41,90 +43,103 @@ def song(_, message):
         duration = results[0]["duration"]
 
     except Exception as e:
-        m.edit("- **معليش ما لقيت شي تأكد من كتابة اسم الفنان مع الاغنية**")
+        await m.edit("- معليش ما لقيت شي تأكد من كتابة اسم الفنان مع الاغنية"")
         print(str(e))
         return
+    await m.edit("- جاري الارسال ..")
     try:
         with yt_dlp.YoutubeDL(ydl_ops) as ydl:
             info_dict = ydl.extract_info(link, download=False)
             audio_file = ydl.prepare_filename(info_dict)
             ydl.process_info(info_dict)
-        rep = f"**✧ [Source alice](t.me/ngd_1)**"
+        rep = f"-› @{app.username} "
+        host = str(info_dict["uploader"])
         secmul, dur, dur_arr = 1, 0, duration.split(":")
         for i in range(len(dur_arr) - 1, -1, -1):
             dur += int(float(dur_arr[i])) * secmul
             secmul *= 60
-        m.edit("- **جاري الارسال ..**")
-        message.reply_audio(
-            audio_file,
+        await m.edit("- ابشر جاري البحث ..")
+        
+        await message.reply_audio(
+            audio=audio_file,
             caption=rep,
-            thumb=thumb_name,
-            parse_mode="md",
             title=title,
+            performer=host,
+            thumb=thumb_name,
             duration=dur,
+            reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text=config.CHANNEL_NAME, url=config.CHANNEL_LINK),
+                ],
+
+            ]
+
+        ),
         )
-        m.delete()
+        await m.delete()
+
     except Exception as e:
-        m.edit("خطأ ، تواصل مع مطور البوت - @NGD_2")
+        await m.edit(" error, wait for bot owner to fix")
         print(e)
 
     try:
-        os.remove(audio_file)
-        os.remove(thumb_name)
+        remove_if_exists(audio_file)
+        remove_if_exists(thumb_name)
     except Exception as e:
         print(e)
 
 
-@app.on_message(filters.regex('^(.*) !!'))
-def song232(_, message):
-  text = message.text
-  if '!!!' in text:
-      print("Error")
-  else:
-    g = text.split(" ")
-    query = str(g[0])
-    m = message.reply("🔎")
-    ydl_ops = {"format": "bestaudio[ext=m4a]"}
+@app.on_message(command(["فيديو", "video","تحميل فيديو"]))
+async def video_search(client, message):
+    ydl_opts = {
+        "format": "best",
+        "keepvideo": True,
+        "prefer_ffmpeg": False,
+        "geo_bypass": True,
+        "outtmpl": "%(title)s.%(ext)s",
+        "quite": True,
+    }
+    query = " ".join(message.command[1:])
     try:
         results = YoutubeSearch(query, max_results=1).to_dict()
         link = f"https://youtube.com{results[0]['url_suffix']}"
         title = results[0]["title"][:40]
         thumbnail = results[0]["thumbnails"][0]
-        thumb_name = f"{title}.jpg"
+        # إزالة الأحرف غير الصحيحة من اسم الملف
+        title = re.sub(r'[\\/*?:"<>|]', '', title)
+        thumb_name = f"thumb{title}.jpg"
         thumb = requests.get(thumbnail, allow_redirects=True)
-        open(thumb_name, "wb").write(thumb.content)
-        duration = results[0]["duration"]
-
-    except Exception as e:
-        m.edit("✗ لم اجد شيئا.\n\nاعطني اسم المغني كامل.")
-        print(str(e))
-        return
-    try:
-        with yt_dlp.YoutubeDL(ydl_ops) as ydl:
-            info_dict = ydl.extract_info(link, download=False)
-            audio_file = ydl.prepare_filename(info_dict)
-            ydl.process_info(info_dict)
-        rep = f"**- Ch** [تحديثات أليس ♪](t.me/ngd_1)"
-        secmul, dur, dur_arr = 1, 0, duration.split(":")
-        for i in range(len(dur_arr) - 1, -1, -1):
-            dur += int(float(dur_arr[i])) * secmul
-            secmul *= 60
-        m.edit("- **جاري الارسال ..**")
-        message.reply_audio(
-            audio_file,
-            caption=rep,
-            thumb=thumb_name,
-            parse_mode="md",
-            title=title,
-            duration=dur,
-        )
-        m.delete()
-    except Exception as e:
-        m.edit("خطأ ، تواصل مع مطور البوت")
-        print(e)
-
-    try:
-        os.remove(audio_file)
-        os.remove(thumb_name)
+        with open(thumb_name, "wb") as file:
+            file.write(thumb.content)
+        results[0]["duration"]
+        results[0]["url_suffix"]
+        results[0]["views"]
+        message.from_user.mention
     except Exception as e:
         print(e)
+    try:
+        msg = await message.reply("- يتم البحث الان .")
+        with yt_dlp.YoutubeDL(ydl_opts) as ytdl:
+            ytdl_data = ytdl.extract_info(link, download=True)
+            file_name = ytdl.prepare_filename(ytdl_data)
+    except Exception as e:
+        return await msg.edit(f"🚫 <b>error:</b> {e}")
+    thumb_path = f"thumb{title}.jpg"
+    if not os.path.exists(thumb_path):
+        return await msg.edit(f"🚫 <b>error:</b> Thumb file not found!")
+    
+    await msg.edit("- تم الرفع انتضر قليلاً .")
+    await message.reply_video(
+        file_name,
+        duration=int(ytdl_data["duration"]),
+        thumb=thumb_path,
+        caption=ytdl_data["title"],
+    )
+    try:
+        os.remove(file_name)
+        os.remove(thumb_path)
+        await msg.delete()
+    except Exception as ex:
+        print(f"- فشل : {ex}")

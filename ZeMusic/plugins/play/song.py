@@ -19,11 +19,10 @@ def remove_if_exists(path):
         os.remove(path)
 
 Nem = config.BOT_NAME + " ابحث"
-
-@app.on_message(command(["بحث","يوت","تحميل صوت","yt]))
+@app.on_message(command(["song","/song", "بحث",Nem]))
 async def song_downloader(client, message: Message):
     query = " ".join(message.command[1:])
-    m = await message.reply_text("<b>«-جـارِ البحث عـن المقطـع الصـوتـي . . .</b>")
+    m = await message.reply_text("<b>«- جـارِ البحث عـن المقطـع الصـوتـي . . .</b>")
     ydl_ops = {
         'format': 'bestaudio[ext=m4a]',
         'keepvideo': True,
@@ -43,10 +42,10 @@ async def song_downloader(client, message: Message):
         duration = results[0]["duration"]
 
     except Exception as e:
-        await m.edit("- معليش ما لقيت شي تأكد من كتابة اسم الفنان مع الاغنية"")
+        await m.edit("- لم يتم العثـور على نتائج ؟!\n- حـاول مجـدداً . . .")
         print(str(e))
         return
-    await m.edit("- جاري الارسال ..")
+    await m.edit("<b>⇜ جـارِ التحميل ▬▭ . . .</b>")
     try:
         with yt_dlp.YoutubeDL(ydl_ops) as ydl:
             info_dict = ydl.extract_info(link, download=False)
@@ -58,7 +57,7 @@ async def song_downloader(client, message: Message):
         for i in range(len(dur_arr) - 1, -1, -1):
             dur += int(float(dur_arr[i])) * secmul
             secmul *= 60
-        await m.edit("- ابشر جاري البحث ..")
+        await m.edit("<b>⇜ جـارِ التحميل ▬▬ . . .</b>")
         
         await message.reply_audio(
             audio=audio_file,

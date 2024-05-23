@@ -1,17 +1,18 @@
-from __future__ import unicode_literals
-
 import os
-
 import requests
-import wget
-import yt_dlp
-from strings.filters import command
-from pyrogram import Client, filters
-from YukkiMusic import app
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from youtube_search import YoutubeSearch
-from yt_dlp import YoutubeDL
+import config
+import aiohttp
+import aiofiles
 
+import yt_dlp
+from yt_dlp import YoutubeDL
+from pyrogram import Client, filters
+from pyrogram.errors import FloodWait
+from pyrogram.types import Message, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+from youtube_search import YoutubeSearch
+
+from ZeMusic import app
+from ZeMusic.plugins.play.filters import command
 
 ydl_opts = {
     "format": "best",

@@ -24,7 +24,7 @@ async def get_group_call(
             ).full_chat
         elif isinstance(chat_peer, InputPeerChat):
             full_chat = (
- المكالمةالكول       await assistant.invoke(GetFullChat(chat_id=chat_peer.chat_id))
+        await assistant.invoke(GetFullChat(chat_id=chat_peer.chat_id))
             ).full_chat
         if full_chat is not None:
             return full_chat.call
